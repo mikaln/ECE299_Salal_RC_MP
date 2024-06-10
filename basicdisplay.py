@@ -5,8 +5,9 @@ import utime
 from ssd1306 import SSD1306_SPI # this is the driver library and the corresponding class
 import framebuf # this is another library for the display.
 import button_interrupt
+from display import screen
 
-
+"""
 # Define columns and rows of the oled display. These numbers are the standard values. 
 SCREEN_WIDTH = 128 #number of columns
 SCREEN_HEIGHT = 64 #number of rows
@@ -38,13 +39,14 @@ oled_spi = SPI( SPI_DEVICE, baudrate= 100000, sck= spi_sck, mosi= spi_sda )
 #
 oled = SSD1306_SPI( SCREEN_WIDTH, SCREEN_HEIGHT, oled_spi, spi_dc, spi_res, spi_cs, True)
 oled.contrast(0x05)
-
-
-# Assign a value to a variable
+"""
+oledDisplay = screen()
+oledDisplay.initDisplay()
 
 while ( True ):
-
-  
+    oledDisplay.updateDisplay()
+    
+"""
 #
 # Clear the buffer
 #
@@ -66,4 +68,4 @@ while ( True ):
 # Transfer the buffer to the screen
 #
         oled.show()
-    
+"""    

@@ -1,5 +1,4 @@
-from machine import Pin
-from machine import Timer
+from machine import Pin, Timer
 
 Count = 0
 
@@ -9,12 +8,12 @@ Button_Active = False
 def button_timer_handler(timer):
     global button
     global Button_Active
-    #print("In button timer handler")
+    print("In button timer handler")
     
     if button.value() == 1 and not Button_Active:
-       # print("Button not Active")
+        print("Button not Active")
         Button_Active = True
-       #print("Button is now active")     
+        print("Button is now active")     
     
     
 def button_int_handler(x):
