@@ -229,13 +229,12 @@ class screen:
     def change_menu(self):
         
         if(button_interrupt.Button_Active == True):
-            """
-            for option in self.current_menu.options:
+            
+            for option in self.current_menu.options.values():
                 if option[0] == Cursor.cursor_value:
                     option[1]()
-            self.current_menu.options.
         button_interrupt.Button_Active = False
-        """
+        
              
     def drawSettingsMenu(self):
         settings = ["Time", "Alarms", "Frequency", "Brightness"]
