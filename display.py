@@ -49,28 +49,32 @@ class screen:
             "Brightness": [3, self.change_brightness],
             "Time": [4, self.change_time],
             "MUTE": [5, self.mute_volume],
-            "Vol": [6,self.change_volume]  
+            "Vol": [6,self.goto_volume_menu]  
             }
         
-        """
+        
         self.volumeMenuOptions = {
-            "Volume" : []
+            "Volume" : [1, self.goto_main_menu] #one option: go back 
             }
-        """
         
-        MainMenu = Menu("Main Menu", self.mainMenuOptions, self.drawMainMenu)
-        #VolumeMenu = Menu("Volume Menu", self.volumeMenuOptions, self.drawMainMenu)
+        
+        self.MainMenu = Menu("Main Menu", self.mainMenuOptions, self.drawMainMenu)
+        self.VolumeMenu = Menu("Volume Menu", self.volumeMenuOptions, self.drawMainMenu)
         self.menuOptions = {
-            "Main Menu" : MainMenu,
+            "Main Menu" : self.MainMenu,
             "Volume Menu": (2, 5, self.drawVolumeMenu)}
         
         self.current_menu = self.menuOptions["Main Menu"]
-        self.volume = 15
+        self.volume = 10
         self.vol_percent = self.volume/15
         self.cursor = 0;
         pico_rtc.start_timing()
         self.volume
-        
+    def goto_main_menu(self):
+        #dont forget to make sure you are using the normal cursor
+        Cursor.using_sp = False
+        Cursor.cursor_value = 1
+        self.current_menu = self.MainMenu
     def change_frequency(self):
         print("changing frequency")
     def set_alarm(self):
@@ -81,7 +85,12 @@ class screen:
         print("changing time")
     def mute_volume(self):
         print("muting volume")
-    def change_volume(self):
+    def goto_volume_menu(self):
+        Cursor.cursor_value = 1
+        Cursor.using_sp = True
+        Cursor.max_sp_value = 15
+        self.current_menu = self.VolumeMenu
+        Cursor.sp_cursor_value = self.volume
         print("changing volume")
                    
         
@@ -218,13 +227,16 @@ class screen:
             self.display_1309.draw_text(15, self.clockDisplay_height, pico_rtc.timestring,
                             self.clockDisplay_Font, invert=False)
     def drawMainMenu(self):
-        Cursor.Total_Numof_settings = len(self.mainMenuOptions)
+        Cursor.Total_Numof_settings = len(self.mainMenuOptions) #update this
         # Write the time
         self.writeTime()
         self.drawVolumeControl()
         self.drawMainControls()
     
     def drawVolumeMenu(self):
+        #self.volume = Cursor.sp_cursor_value
+        self.volume = 15
+        self.vol_percent = self.volume/15
         self.drawMainMenu()
     def change_menu(self):
         
