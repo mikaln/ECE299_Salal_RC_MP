@@ -1,0 +1,66 @@
+from machine import Pin, Timer
+
+class EncoderCursor:
+    
+    
+    
+    
+    
+    def __init__(self):
+        self.EncoderPinA = Pin(4,Pin.IN)
+        self.EncoderPinB = Pin(5,Pin.IN)
+        self.cursor_value = 0
+        self.incremented = False
+        self.StateA = 0
+        self.StateB = 0
+        self.tim = Timer()
+        
+        EncoderPinA.irq(handler = self.EncoderPinAInterrupt, trigger = Pin.IRQ_FALLING|Pin.IRQ_RISING,
+                hard = True)
+
+
+        EncoderPinB.irq(handler = self.EncoderPinBInterrupt, trigger = Pin.IRQ_FALLING|Pin.IRQ_RISING,
+                hard = True)
+    
+    
+    def timer_callback(self,tim):
+        self.incremented = False
+    
+    def EncoderPinAInterrupt(self,PinA):
+        #global StateA, StateB, incremented, timer_callback,tim
+        PinFlags = PinA.irq().flags()
+        
+        if(PinFlags & 0x0C) == 8:
+            #rising edge
+            self.StateA = 1
+            if (self.StateA==1) and (self.StateB == 0) and (self.incremented == False):
+                print("CW")
+                self.incremented = True
+                self.tim.init(mode=Timer.ONE_SHOT, period=100, callback=self.timer_callback)
+            
+        elif(PinFlags & 0x0C) == 4:
+            #falling edge
+            self.StateA = 0
+    
+    
+    
+    def EncoderPinBInterrupt(self,PinB):
+        global StateA, StateB,incremented, timer_callback,tim
+        PinFlags = PinB.irq().flags()
+        
+        if(PinFlags & 0x0C) == 8:
+            #rising edge
+            self.StateB = 1
+            if (self.StateA==0) and (self.StateB == 1) and self.incremented == False:
+                print("CCW")
+                self.incremented = True
+                tim.init(mode=Timer.ONE_SHOT, period=100, callback=timer_callback)
+            
+        elif(PinFlags & 0x0C) == 4:
+            #falling edge
+            StateB = 0
+ 
+            
+
+    
+    

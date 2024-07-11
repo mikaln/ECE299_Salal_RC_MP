@@ -1,0 +1,102 @@
+from machine import Pin, Timer
+import time
+
+button = Pin(0, Pin.IN, Pin.PULL_UP)
+Button_Active = False
+Button_Pending = False
+first_rise_time = 0
+button_pressed = False
+def button_timer_handler(timer):
+    global button
+    global Button_Active
+    global Button_Pending
+    #print("In button timer handler")
+    #print("Button Val : ", button.value())
+    if button.value() == 1 and not Button_Active:
+       # print("Activating Button")
+        Button_Active = True          
+    Button_Pending = False
+    #print("Button not pending")     
+    
+"""    
+def button_int_handler(x):
+    global Button_Pending
+    #print("button int handler, button pending? ", Button_Pending)
+    if Button_Pending == False:
+        Button_Pending = True
+        Timer(mode=Timer.PERIODIC, period=200, callback=button_timer_handler)
+        #print("Button Pending")
+        
+"""
+"""
+def button_int_handler_rise(x):
+    print("in rising")
+    global first_rise_time
+    global Button_Pending
+    global Button_Active
+    current_rise_time = time.ticks_ms()
+    print("Button Active?" + Button_Active + "Button Pending?" + Button_Pending + "")
+    if Button_Active == False and Button_Pending == False:
+        first_rise_time = current_rise_time
+        print("first_rise_time: ", first_rise_time)
+        Button_Pending = True
+"""
+button_last = time.ticks_ms()
+def button_int_handler_rise(pin):
+    global Button_Active, button_last
+    if time.ticks_diff(time.ticks_ms(), button_last) > 200:
+        Button_Active = True
+        button_last = time.ticks_ms()
+    
+def button_int_handler_fall(x):
+    global first_rise_time
+    global Button_Pending
+    global Button_Active
+    fall_time = time.ticks_ms()
+    print("diff: ", (fall_time - first_rise_time))
+    if time.ticks_ms() >= first_rise_time + 7000:
+        Button_Active = True
+        Button_Pending = False
+        print("button active")
+
+
+def button_int_handler(pin):
+    global first_rise_time
+    global Button_Pending
+    global Button_Active
+    pinflags = pin.irq().flags()
+    
+    if((pinflags & 0x0C) == 8):
+        print("")
+        fall_time = time.ticks_ms()
+        print("diff: ", (fall_time - first_rise_time))
+    if time.ticks_ms() >= first_rise_time + 700:
+        Button_Active = True
+        Button_Pending = False
+        print("button active")
+        
+        
+    elif (pinflags & 0x0C) == 4:
+        print("falling edge")
+        current_rise_time = time.ticks_ms()
+       #print("Button Active?" + Button_Active + "Button Pending?" + Button_Pending + "")
+        if Button_Active == False and Button_Pending == False:
+            first_rise_time = current_rise_time
+            print("first_rise_time: ", first_rise_time)
+            Button_Pending = True
+        
+        
+    else:
+        print("rising and falling edge")
+        
+button.irq(trigger = Pin.IRQ_RISING, handler = button_int_handler_rise, hard = True)
+
+#button.irq(trigger = Pin.IRQ_RISING, handler = button_int_handler_rise, hard = True)
+#button.irq(trigger = Pin.IRQ_FALLING, handler = button_int_handler_fall, hard = True)
+
+
+    
+    
+
+print("button init")
+

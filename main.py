@@ -5,12 +5,16 @@ import utime
 from ssd1306 import SSD1306_SPI # this is the driver library and the corresponding class
 import framebuf # this is another library for the display.
 import button_interrupt
-from display import screen
+#from display import screen
+from RC1309_Display import RC1309Display
 
-
-oledDisplay = screen()
+oledDisplay = RC1309Display()
 oledDisplay.initDisplay()
 
 while ( True ):
     oledDisplay.updateDisplay()
+#
+#
+#
+
       
