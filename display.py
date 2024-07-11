@@ -53,13 +53,16 @@ class screen:
             }
         
         
-        self.volumeMenuOptions = {
-            "Volume" : [1, self.goto_main_menu] #one option: go back 
-            }
-        
+
         
         self.MainMenu = Menu("Main Menu", self.mainMenuOptions, self.drawMainMenu)
-        self.VolumeMenu = Menu("Volume Menu", self.volumeMenuOptions, self.drawMainMenu)
+        
+        self.volumeMenuOptions = {
+            "Volume" : [self.MainMenu.options["Vol"][0], self.goto_main_menu] #one option: go back 
+        }
+        
+        
+        self.VolumeMenu = Menu("Volume Menu", self.volumeMenuOptions, self.drawVolumeMenu)
         self.menuOptions = {
             "Main Menu" : self.MainMenu,
             "Volume Menu": (2, 5, self.drawVolumeMenu)}
@@ -69,11 +72,11 @@ class screen:
         self.vol_percent = self.volume/15
         self.cursor = 0;
         pico_rtc.start_timing()
-        self.volume
+        
     def goto_main_menu(self):
         #dont forget to make sure you are using the normal cursor
         Cursor.using_sp = False
-        Cursor.cursor_value = 1
+        #Cursor.cursor_value = 1
         self.current_menu = self.MainMenu
     def change_frequency(self):
         print("changing frequency")
@@ -86,7 +89,7 @@ class screen:
     def mute_volume(self):
         print("muting volume")
     def goto_volume_menu(self):
-        Cursor.cursor_value = 1
+        Cursor.cursor_value = self.MainMenu.options["Vol"][0]
         Cursor.using_sp = True
         Cursor.max_sp_value = 15
         self.current_menu = self.VolumeMenu
@@ -193,7 +196,9 @@ class screen:
     def drawVolumeControl(self):
         padding = 2
         init_x = 5
-        rec_width = 80 
+        rec_width = 80
+        rec_height = 4
+        sel_line_indicator_offset = 2
         rec_fill = int((rec_width-1)*self.vol_percent)
         
         if Cursor.cursor_value == self.mainMenuOptions["MUTE"][0]:
@@ -203,12 +208,18 @@ class screen:
         
         rec_x = init_x + self.mainControls_Font.measure_text("MUTE") + padding
         rec_y = 10
-        self.display_1309.draw_rectangle(rec_x,rec_y,rec_width,4)
+        self.display_1309.draw_rectangle(rec_x,rec_y,rec_width, rec_height)
         lines_coords = [[rec_x, rec_y  + 1],[rec_x + rec_fill, rec_y + 1],
                         [rec_x, rec_y  + 2],[rec_x + rec_fill, rec_y + 2]]
         self.display_1309.draw_lines(lines_coords)
-        
+        #draw a line under the volume bar if we are changing the volume
+        if self.current_menu == self.VolumeMenu:
+            self.display_1309.draw_line(rec_x + 2,rec_y + rec_height +sel_line_indicator_offset,
+                                        rec_x + rec_width - 3, rec_y + rec_height +sel_line_indicator_offset)
+            self.display_1309.draw_line(rec_x + 2,rec_y - 3, rec_x + rec_width - 3, rec_y -3)
         if Cursor.cursor_value == self.mainMenuOptions["Vol"][0]:
+
+                
             self.display_1309.draw_text(init_x + self.mainControls_Font.measure_text("MUTE") + 2*padding + rec_width,
                                         self.mainControls_Font.height, "Vol", self.mainControls_Font, invert = True)
         else:
@@ -234,10 +245,13 @@ class screen:
         self.drawMainControls()
     
     def drawVolumeMenu(self):
-        #self.volume = Cursor.sp_cursor_value
-        self.volume = 15
-        self.vol_percent = self.volume/15
+        if self.volume != Cursor.sp_cursor_value:
+            print("Changing volume to: ", Cursor.sp_cursor_value)
+            self.volume = Cursor.sp_cursor_value
+            self.vol_percent = self.volume/15
+
         self.drawMainMenu()
+        
     def change_menu(self):
         
         if(button_interrupt.Button_Active == True):
