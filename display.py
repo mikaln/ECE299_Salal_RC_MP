@@ -44,12 +44,13 @@ class screen:
     
     def __init__(self):
         self.mainMenuOptions = {
-            "Frequency" : [1, self.change_frequency],
+            "Frequency" : [6, self.change_frequency],
             "Alarms": [2, self.set_alarm],
-            "Brightness": [3, self.change_brightness],
-            "Time": [4, self.change_time],
-            "MUTE": [5, self.mute_volume],
-            "Vol": [6,self.goto_volume_menu]  
+            "MUTE": [3, self.mute_volume],
+            "Vol": [4,self.goto_volume_menu],
+            "Time": [5, self.change_time],
+            "Settings": [1, self.goto_settings_menu]
+ 
             }
         
         
@@ -68,11 +69,20 @@ class screen:
             "Volume Menu": (2, 5, self.drawVolumeMenu)}
         
         self.current_menu = self.menuOptions["Main Menu"]
+        
+        """
+            Below goes the globel settings
+        """
         self.volume = 10
+        self.current_frequency = 101.9
+        self.current_next_alarm = "06:30"
+        
         self.vol_percent = self.volume/15
         self.cursor = 0;
         pico_rtc.start_timing()
         
+    def goto_settings_menu(self):
+        print("going to settings menu")
     def goto_main_menu(self):
         #dont forget to make sure you are using the normal cursor
         Cursor.using_sp = False
@@ -162,13 +172,13 @@ class screen:
         #
         # Clear the buffer
         #
-        #print("Clearing buffers")
+        
         self.display_1309.clear_buffers()
         
         #
         # Update the text on the screen
         #
-        #print("updating text")
+        
         self.current_menu.drawing_function()
         #self.drawMainMenu()
         
@@ -179,20 +189,37 @@ class screen:
 
     def drawMainControls(self):
         
-        settings = ["101.9", "Alarms", "Brightness"]
-        #self.cursor = self.cursor % (len(settings) + 1) 
-        padding = 8
-        y_val = 64 - self.mainControls_Font.height
-        x_val = 0
-        index = 0
-        for setting in settings:
-            if index == Cursor.cursor_value -1 :
-                self.display_1309.draw_text(x_val, y_val, setting, self.mainControls_Font, invert = True)
-            else:
-                self.display_1309.draw_text(x_val, y_val, setting, self.mainControls_Font, invert = False)
-            x_val = x_val + self.mainControls_Font.measure_text(setting) + padding
-            index = index + 1
+        settings = ["101.9", "Next Alarm:"]
+        padding = 10
+        y_val = 1
+        x_val = 10
+        
+        settings_icon = "Settings"
+        #settings_icon_width = self.mainControls_Font.measure_text(settings_icon)
+        if Cursor.cursor_value == self.MainMenu.options["Settings"][0]:
+            self.display_1309.draw_text(x_val, y_val, settings_icon, self.mainControls_Font, invert = True)
+        else:
+            self.display_1309.draw_text(x_val, y_val, settings_icon, self.mainControls_Font, invert = False)
+ 
+        #Drawing next alarm
+        x_val = x_val + self.mainControls_Font.measure_text(settings_icon) + padding
+        al_str = "Next Alarm: "+self.current_next_alarm 
+        if Cursor.cursor_value == self.MainMenu.options["Alarms"][0]:
+            self.display_1309.draw_text(x_val, y_val, al_str, self.mainControls_Font, invert = True)
+        else:
+            self.display_1309.draw_text(x_val, y_val, al_str, self.mainControls_Font, invert = False)
+        
+
             
+        #Drawing Frequency
+        freq_str = str(self.current_frequency)
+        freq_str_width = self.mainControls_Font.measure_text(freq_str)
+        x_val = int(64 - freq_str_width/2)
+        y_val = 50
+        if Cursor.cursor_value == self.MainMenu.options["Frequency"][0]:
+            self.display_1309.draw_text(x_val, y_val, freq_str, self.mainControls_Font, invert = True)
+        else:
+            self.display_1309.draw_text(x_val, y_val, freq_str, self.mainControls_Font, invert = False)
     def drawVolumeControl(self):
         padding = 2
         init_x = 5
@@ -200,14 +227,21 @@ class screen:
         rec_height = 4
         sel_line_indicator_offset = 2
         rec_fill = int((rec_width-1)*self.vol_percent)
-        
-        if Cursor.cursor_value == self.mainMenuOptions["MUTE"][0]:
-            self.display_1309.draw_text(init_x, self.mainControls_Font.height, "MUTE", self.mainControls_Font, invert = True)
-        else:
-            self.display_1309.draw_text(init_x, self.mainControls_Font.height, "MUTE", self.mainControls_Font, invert = False)
-        
         rec_x = init_x + self.mainControls_Font.measure_text("MUTE") + padding
-        rec_y = 10
+        rec_y = 11
+        text_y = rec_y-2
+        if Cursor.cursor_value == self.mainMenuOptions["MUTE"][0]:
+            self.display_1309.draw_text(init_x, text_y, "MUTE", self.mainControls_Font, invert = True)
+        else:
+            self.display_1309.draw_text(init_x, text_y, "MUTE", self.mainControls_Font, invert = False)
+            
+        if Cursor.cursor_value == self.mainMenuOptions["Vol"][0]:    
+            self.display_1309.draw_text(init_x + self.mainControls_Font.measure_text("MUTE") + 2*padding + rec_width,
+                                        text_y, "Vol", self.mainControls_Font, invert = True)
+        else:
+            self.display_1309.draw_text(init_x + self.mainControls_Font.measure_text("MUTE") + 2*padding + rec_width,
+                            text_y, "Vol", self.mainControls_Font, invert = False)     
+        
         self.display_1309.draw_rectangle(rec_x,rec_y,rec_width, rec_height)
         lines_coords = [[rec_x, rec_y  + 1],[rec_x + rec_fill, rec_y + 1],
                         [rec_x, rec_y  + 2],[rec_x + rec_fill, rec_y + 2]]
@@ -216,15 +250,8 @@ class screen:
         if self.current_menu == self.VolumeMenu:
             self.display_1309.draw_line(rec_x + 2,rec_y + rec_height +sel_line_indicator_offset,
                                         rec_x + rec_width - 3, rec_y + rec_height +sel_line_indicator_offset)
-            self.display_1309.draw_line(rec_x + 2,rec_y - 3, rec_x + rec_width - 3, rec_y -3)
-        if Cursor.cursor_value == self.mainMenuOptions["Vol"][0]:
 
-                
-            self.display_1309.draw_text(init_x + self.mainControls_Font.measure_text("MUTE") + 2*padding + rec_width,
-                                        self.mainControls_Font.height, "Vol", self.mainControls_Font, invert = True)
-        else:
-            self.display_1309.draw_text(init_x + self.mainControls_Font.measure_text("MUTE") + 2*padding + rec_width,
-                            self.mainControls_Font.height, "Vol", self.mainControls_Font, invert = False)
+
         
         
         #fill in rectangle based on volume settings
@@ -237,12 +264,20 @@ class screen:
         else:
             self.display_1309.draw_text(15, self.clockDisplay_height, pico_rtc.timestring,
                             self.clockDisplay_Font, invert=False)
+    def drawMountains(self):
+        path_r = "images/mountain_right_35x25.mono"
+        path_l = "images/mountain_left_35x25.mono"
+        self.display_1309.draw_bitmap(path_r, 0, 64 - 25, 35, 25, invert=False, rotate=0)
+        self.display_1309.draw_bitmap(path_l, 128 - 35, 64 - 25, 35, 25, invert=False, rotate=0)
     def drawMainMenu(self):
         Cursor.Total_Numof_settings = len(self.mainMenuOptions) #update this
         # Write the time
+        
+        self.drawMountains()
         self.writeTime()
         self.drawVolumeControl()
         self.drawMainControls()
+        
     
     def drawVolumeMenu(self):
         if self.volume != Cursor.sp_cursor_value:
@@ -276,16 +311,7 @@ class screen:
             index = index + 1
         
         self.cursor = self.cursor % len(settings)        
-    def drawBasicDisplay(self):
-        self.oled.text("Welcome to ECE", 0, 0) # Print the text starting from 0th column and 0th row
-        self.oled.text("299", 45, 10) # Print the number 299 starting at 45th column and 10th row
-        self.oled.text("Count is: %4d" % button_interrupt.Count, 0, 30 ) # Print the value stored in the variable Count. 
-        #
-        # Draw box below the text
-        #
-        self.oled.rect( 0, 50, 128, 5, 1  )
-    
-    
+
 
             
     
